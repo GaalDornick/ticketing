@@ -56,3 +56,15 @@ So, to reduce contention, this implementation uses the concept of "checking out"
 -Fail fast - When all rows are checked out, the system will complain that no more seats are available. THis means that if there are too many concurrent requests for the same level, a few unlucky ones will fail
 
 The side effect is that some of these failures will be false fails. The system will complain that there are no more seats, even if there are seats. If a 100 seat row is checked out by a request that is assigning 3 seats, all 100 seats are unavailable to other requests until the first request is done. This means that the stadium will be 97 seats short momentarily. As explained above, in condition of high concurrency winds, it's better to fail than to contend. 
+
+## ALternative implementations
+I considered alternative implementations, but rejected them because of various reasons. I am presenting them here
+
+###Even distribution
+Initially, I had this idea of trying to evenly distribute the seats across rows. For example, in the current application, if you request 51 seats at a level where each level has 50 seats, the current algorithm puts 50 people in 1 row, and 1 person in the second row. I considered splitting the group into 2: 25 in one row, 26 in the other. However, this leads to high fragmentation, which is not desirable in the long run. I am demonstrating this algorithm using an excel sheet. I had implemented it in Excel first as a proof of concept. I have checked this in the docs folder. It contains all possible permutations and shows how the seats get fragmented with this algorithm
+
+##Organizing seats into blocks
+Another idea I considered was grouping theater-goers into blocks or 2 or 3. A block would never be split up. So, for example, if the block size was 3, and the user requested 51 seats, 48 would go to one row and 3 would go to second row. This prevents a single person in the group from being lonely. It would work best if the block size was aligned with the average size of a party. I didn't implement this because I couldn't pick a good block size. DO most theater goers go as pairs or in larger groups? You can expect Disney On Ice to have a completely differrent profile than a Taylor Swift concert. Also, it would have increased code complexity
+
+##More granular locking
+Right now, a whole row is checked out. I was initially not comfortable with locking up 100 seats to allocate 2. I thought about dividing up a row into segments (much like how a disk track is divided into segments) and checking out segments instead of whole rows. However, this would have increased complexity. This code can be refactored to support segments. The basic idea is there.
